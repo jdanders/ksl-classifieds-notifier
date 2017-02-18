@@ -65,13 +65,15 @@ optional arguments:
   -f, --foreground      Do not fork to background
 ```
 
-### Advance Usage:
+### Advanced Usage:
 
 Most filters available on the KSL webpage are made available through the script. Here's an example:
 
-`./ksl_notify.py iphone galaxy --email example@example.com --smtpserver "smtp.example.com:587" -l /tmp/ksl_iphone_log.log --foreground --category Electronics --subcategory "Cell Phones Unlocked" --min-price 100 --max-price 250 --zip 84111 --miles 35 --time 60`
+```
+./ksl_notify.py iphone galaxy --email example@example.com --smtpserver "smtp.example.com:587" -l /tmp/ksl_iphone_log.log --foreground --category Electronics --subcategory "Cell Phones Unlocked" --min-price 100 --max-price 250 --zip 84111 --miles 35 --time 60
+```
 
-This will email `example@example.com` all listings matching "iphone" or "galaxy" searches in "Unlocked Cell Phones" underneath "Electronics" category that cost between \$100-\$250 within 35 miles of zip code 84111. It will check once per hour.
+This will email `example@example.com` all listings matching "iphone" or "galaxy" searches in "Unlocked Cell Phones" underneath "Electronics" category that cost between $100-$250 within 35 miles of zip code 84111. It will check once per hour.
 
 ### Design:
 
