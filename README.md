@@ -93,4 +93,8 @@ Figure out how to make the ksl_notify argparse parameters inherit from the ksl.p
 
 Add a callback of some kind to allow user to add custom filtering on results before deciding whether to email the result.
 
-Migrate from BeautifulSoup and urlopen to a more resilient session model that acts more like a visitor to sell.ksl.com would. Not likely since I can't guarantee it would be more resilient.
+Migrate from BeautifulSoup and urlopen to a more resilient session model that acts more like a visitor to sell.ksl.com would. Not likely since I can't guarantee it would be more resilient. Alternatively figure out how to use the API that the KSL Classified app uses. That should work more consistently than any scraping.
+
+### Compliance with KSL Terms of Use
+
+Please do not use the script if it violates KSL Classifieds Terms of Use, currently found [here](http://www.ksl.com/?nid=391&sid=848020). You may also need to consider the ksl.com site Terms of Use, currently found [here](http://www.ksl.com/?sid=95313&nid=250). I am not a lawyer and can offer no advice on the appropriate use of this script and I am not liable for your use of this script.
