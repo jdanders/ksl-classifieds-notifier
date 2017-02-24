@@ -11,7 +11,7 @@ from ksl import KSL, Listing
 
 
 # Message strings
-subject = "KSL Classified match found for {query}"
+subject = "{query} search match on KSL Classifieds"
 sender = "KSL Notify <{mail}>"
 message_template = "\r\n".join([
     "Subject: {subject}",
