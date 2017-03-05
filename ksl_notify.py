@@ -4,6 +4,7 @@ import sys
 import argparse
 import logging
 import time
+import datetime
 import getpass
 import smtplib
 import socket
@@ -156,12 +157,17 @@ def main(args):
     # find our results
     queries = args.pop('query')
     exception_count = 0
+    today = None
     while True:
         try:
             seen = check_ksl(args, queries, seen, email, passwd, smtpserver)
-            time.sleep(loop_delay)
+            # log seen list daily for debug
+            if (today != datetime.date.today()):
+                logging.debug("seen list: %s"%(seen))
+                today = datetime.date.today()
             if exception_count > 0:
                 exception_count -= 1
+            time.sleep(loop_delay)
         # While looping in daemon mode, try to keep executing
         # This will catch bad server connections, etc.
         except KeyboardInterrupt:
