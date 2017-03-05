@@ -177,7 +177,7 @@ def main(args):
                 send_email(email, passwd, smtpserver, str(queries),
                            "Exception in script detected.\n"
                            "Exception count %d\n"
-                           "The script will die after the count reaches 100"
+                           "The script will die after the count reaches 10"
                            % (exception_count / 10), 0)
             except:
                 pass
