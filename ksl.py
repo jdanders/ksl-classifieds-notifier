@@ -37,14 +37,26 @@ class KSL(object):
             # perform every search using the thread pool executor
             yield from ex.map(self.__do_request, self.build_qs(query, **etc))
 
-    def find_elements(self, html):
+    def find_elements(self, html, raw_html=False):
         soup = BeautifulSoup(html, 'html.parser')
 
         for ad_box in soup.find_all('div', class_='listing'):
             if 'featured' in ad_box.attrs['class']:
                 continue
-            links = ad_box.find_all('a', class_='link')
+            if raw_html:
+                # return any css links
+                css = [link['href'] for link in soup.find_all('link')
+                       if "css" in link['href']]
+                css = [urljoin(self.URL, link) for link in css]
+                # fix other links to be absolute
+                for element in ad_box.find_all(href=True):
+                    element['href'] = urljoin(self.URL, element['href'])
+                for element in ad_box.find_all(src=True):
+                    element['src'] = urljoin(self.URL, element['src'])
+                yield str(ad_box), css
+                continue
 
+            links = ad_box.find_all('a', class_='link')
             # get the listing title
             if links:
                 #    and clean it up...
