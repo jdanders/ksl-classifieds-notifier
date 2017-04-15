@@ -90,6 +90,8 @@ def gather_report(query_result, seen):
                        '{result.city}, {result.state}\n'
                        '*  {result.description}\n\n'.format(**locals()))
             # Kill non-ascii characters
+            report = report.encode('ascii', 'ignore').decode()
+            # Track seen results
             new_seen.append(result.link)
     return report, new_seen
 
@@ -175,15 +177,17 @@ def main(args):
             # This is frequent-ish, so don't report, but still keep track
             logging.debug("Socket timeout")
             exception_count += 10
-        except:
+        except Exception as e:
             logging.exception("Exception found in main loop")
             exception_count += 10
             try:
+                exc_txt = str(e)
                 send_email(email, passwd, smtpserver, str(queries),
                            "Exception in script detected.\n"
                            "Exception count %d\n"
-                           "The script will die after the count reaches 10"
-                           % (exception_count / 10), 0)
+                           "The script will die after the count reaches 10\n"
+                           "%s"
+                           % (exception_count / 10, exc_txt), 0)
             except:
                 pass
             # If there is something more basic failing, the count trigger

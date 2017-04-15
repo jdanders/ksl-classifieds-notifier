@@ -61,7 +61,7 @@ class KSL(object):
             if links:
                 #    and clean it up...
                 title = links[0].text.strip(string.punctuation)
-                title = [t.capitalize() for t in title.split() if len(t) > 3]
+                title = [t.capitalize() for t in title.split()]
                 title = ' '.join(title)
                 link = urljoin(self.URL, links[0].get('href'))
             else:
