@@ -167,7 +167,6 @@ def main(args):
                 today = datetime.date.today()
             if exception_count > 0:
                 exception_count -= 1
-            time.sleep(loop_delay)
         # While looping in daemon mode, try to keep executing
         # This will catch bad server connections, etc.
         except KeyboardInterrupt:
@@ -192,6 +191,7 @@ def main(args):
             if exception_count > 100:
                 logging.error("Too many exceptions, terminating")
                 raise
+        time.sleep(loop_delay)
 
 
 if __name__ == '__main__':
