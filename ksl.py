@@ -4,7 +4,7 @@ import concurrent.futures
 import string
 
 from collections import namedtuple
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from urllib.parse import urlencode, urljoin
 
 from bs4 import BeautifulSoup
@@ -14,7 +14,7 @@ Listing = namedtuple('Listing', 'title city state age price link description')
 
 
 class KSL(object):
-    URL = 'http://ksl.com/classifieds/search?'
+    URL = 'https://ksl.com/classifieds/search?'
 
     # Extra query string entries
     URL_QS = {
@@ -30,7 +30,14 @@ class KSL(object):
             timeout = 5  # seconds
         else:
             query, url, timeout = args
-        return (query, urlopen(url, timeout=timeout).read(), )
+        req = Request(
+            url,
+            data=None,
+            headers={
+                'User-Agent': ('Mozilla/5.0')
+            }
+        )
+        return (query, urlopen(req, timeout=timeout).read(), )
 
     def search(self, query, **etc):
         with self.thread_pool as ex:
@@ -140,7 +147,7 @@ class KSL(object):
 
             # encode
             qs = urlencode(qs)
-            queryurl = '{}&{}'.format(self.URL, qs)
+            queryurl = self.URL + qs
             yield (query, queryurl, )
 
     def listing(id):
