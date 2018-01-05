@@ -86,7 +86,7 @@ def gather_report(query_result, seen):
             report += ('*' * 25 +
                        '\n{result.link}\n'
                        '{result.title}\n'
-                       '{result.price} - {result.age} - '
+                       '${result.price} - {result.age} - '
                        '{result.city}, {result.state}\n'
                        '*  {result.description}\n\n'.format(**locals()))
             # Kill non-ascii characters

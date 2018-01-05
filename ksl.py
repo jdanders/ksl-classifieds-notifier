@@ -144,7 +144,7 @@ class KSL(object):
 def gather_report(query_result):
     report = ""
     for result in query_result:
-        report += ('{result.title} - {result.price} - {result.age} : '
+        report += ('{result.title} - ${result.price} - {result.age} : '
                    '{result.city}, {result.state}\n'
                    '   {result.link}\n'
                    '   {result.description}\n\n'.format(**locals()))
