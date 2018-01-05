@@ -8,13 +8,16 @@ from urllib.request import urlopen, Request
 from urllib.parse import urlencode, urljoin
 
 from bs4 import BeautifulSoup
+import json
+from datetime import datetime
 
 
 Listing = namedtuple('Listing', 'title city state age price link description')
 
 
 class KSL(object):
-    URL = 'https://ksl.com/classifieds/search?'
+    SEARCH_URL = 'https://ksl.com/classifieds/search?'
+    LIST_URL = 'https://www.ksl.com/classifieds/listing/'
 
     # Extra query string entries
     URL_QS = {
@@ -44,70 +47,54 @@ class KSL(object):
             # perform every search using the thread pool executor
             yield from ex.map(self.__do_request, self.build_qs(query, **etc))
 
+    # NOTE: raw_html function is broken now that listings are JavaScript...
     def find_elements(self, html, raw_html=False):
         soup = BeautifulSoup(html, 'html.parser')
 
-        for ad_box in soup.find_all('div', class_='listing'):
-            if 'featured' in ad_box.attrs['class']:
+        # Webpage uses a javascript data structure to hold ad info
+        for script in soup.find_all('script'):
+            if "listings: " in str(script):
+                # reduce script to just json structure
+                # Looks something like this right now:
+                #  window.renderSearchSection({ listings: [{"id" . . .
+                #  ...
+                #  })
+                # So we just need to grab stuff between outer parens
+                list_json = (script.contents[0].split('(', 1)[-1]
+                                               .rsplit(')', 1)[0])
+                # Put double quotes around property name
+                list_json = list_json.replace('listings: ', '"listings": ')
+                # Remove unneeded and poorly formatted properties
+                '''
+                    displayType: 'grid',
+                    userData: {"contactBehindLogin":true}
+                '''
+                # so just keep the first two lines, then fix struct ending
+                list_json = "\n".join(list_json.split("\n")[:2])
+                list_json = list_json.rstrip(',') + "}"
+                # Turn the json into a dict and grab the list of listings
+                listings = json.loads(list_json)['listings']
+                break
+
+        # keys in each listing:
+        #  'createTime', 'cellPhone', 'lat', 'modifyTime', 'sellerType',
+        #  'marketType', 'favorited', 'state', 'city', 'source', 'lon',
+        #  'description', 'pageviews', 'memberId', 'city_lower', 'subCategory',
+        #  'photo', 'email', 'category', 'displayTime', 'price', 'zip',
+        #  'homePhone', 'listingType', 'expireTime', 'title', 'id', 'name'
+        for ad_box in listings:
+            if 'featured' in ad_box['listingType']:
                 continue
-            if raw_html:
-                # return any css links
-                css = [link['href'] for link in soup.find_all('link')
-                       if "css" in link['href']]
-                css = [urljoin(self.URL, link) for link in css]
-                # fix other links to be absolute
-                for element in ad_box.find_all(href=True):
-                    element['href'] = urljoin(self.URL, element['href'])
-                for element in ad_box.find_all(src=True):
-                    element['src'] = urljoin(self.URL, element['src'])
-                yield str(ad_box), css
-                continue
 
-            links = ad_box.find_all('a', class_='link')
-            # get the listing title
-            if links:
-                #    and clean it up...
-                title = links[0].text.strip(string.punctuation)
-                title = [t.capitalize() for t in title.split()]
-                title = ' '.join(title)
-                link = urljoin(self.URL, links[0].get('href'))
-            else:
-                continue
-
-            # get the price
-            price_box = ad_box.find('h3', class_='price')
-
-            # ignore prices that "don't exist"
-            if not price_box or price_box.text.count('-') >= 6:
-                continue
-            else:
-                price = price_box.text.strip()
-
-            # get the location
-            ad_detail = ad_box.find('div', class_='listing-detail-line')
-            location = ad_detail.find('span', class_='address').text
-            location = location.encode('ascii', 'ignore')
-            location = location.decode('utf-8')
-            location = location.split(',')
-
-            #    get the city and state, clean up the city from formatting
-            city, state = location[0].strip(), location[-1].strip().upper()
-            city = ' '.join([p.capitalize() for p in city.split()])
-
-            #    get the age of the posting
-            lifespan = ad_detail.find('span', class_='timeOnSite').text.strip()
-            lifespan = lifespan.encode('ascii', 'ignore').split(b'|')[-1]
-            lifespan = lifespan.strip().decode('ascii')
-
-            #    get the description
-            description = ad_box.find('div', class_='description-text')
-            # Remove the 'more ...' text after the link to more...
-            linktxt = description.find('a').text
-            description = description.text.replace(linktxt, '').strip()
-            description = description.encode('ascii', 'ignore').decode('utf-8')
-
-            yield Listing(title, city, state, lifespan,
-                          price, link, description)
+            created = datetime.strptime(ad_box['createTime'],
+                                        "%Y-%m-%dT%H:%M:%SZ")
+            displayed = datetime.strptime(ad_box['displayTime'],
+                                          "%Y-%m-%dT%H:%M:%SZ")
+            lifespan = str(displayed - created)
+            link = urljoin(self.LIST_URL, str(ad_box['id']))
+            yield Listing(ad_box['title'], ad_box['city'], ad_box['state'],
+                          lifespan, ad_box['price'], link,
+                          ad_box['description'])
 
     def build_qs(self, queries, **etc):
         for query in queries:
@@ -147,7 +134,7 @@ class KSL(object):
 
             # encode
             qs = urlencode(qs)
-            queryurl = self.URL + qs
+            queryurl = self.SEARCH_URL + qs
             yield (query, queryurl, )
 
     def listing(id):
