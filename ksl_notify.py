@@ -209,7 +209,7 @@ if __name__ == '__main__':
     p.add_argument('--smtpserver', default='',
                    help='email SMTP server:port, should be unneeded for '
                    'gmail, outlook, hotmail, yahoo, or comcast')
-    p.add_argument('-t', '--time', nargs='?', default=10, const=int,
+    p.add_argument('-t', '--time', nargs='?', default=10, const=int, type=int,
                    help='Number of minutes to wait between searches')
     p.add_argument('-l', '--logfile', default=None,
                    help='File to log output from daemon process, defaults '
