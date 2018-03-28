@@ -88,9 +88,7 @@ class KSL(object):
 
             created = datetime.strptime(ad_box['createTime'],
                                         "%Y-%m-%dT%H:%M:%SZ")
-            displayed = datetime.strptime(ad_box['displayTime'],
-                                          "%Y-%m-%dT%H:%M:%SZ")
-            lifespan = str(displayed - created)
+            lifespan = str(created)
             link = urljoin(self.LIST_URL, str(ad_box['id']))
             yield Listing(ad_box['title'], ad_box['city'], ad_box['state'],
                           lifespan, ad_box['price'], link,
