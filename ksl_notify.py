@@ -158,6 +158,7 @@ def main(args):
 
     # find our results
     queries = args.pop('query')
+    exception_thresh = int(args.pop('emailexceptions')) * 10
     exception_count = 0
     today = None
     while True:
@@ -182,12 +183,13 @@ def main(args):
             exception_count += 10
             try:
                 exc_txt = str(e)
-                send_email(email, passwd, smtpserver, str(queries),
-                           "Exception in script detected.\n"
-                           "Exception count %d\n"
-                           "The script will die after the count reaches 10\n"
-                           "%s"
-                           % (exception_count / 10, exc_txt), 0)
+                if exception_count > exception_thresh:
+                    send_email(email, passwd, smtpserver, str(queries),
+                               "Exception in script detected.\n"
+                               "Exception count %d\n"
+                               "The script will die after the count reaches 10\n"
+                               "%s"
+                               % (exception_count / 10, exc_txt), 0)
             except:
                 pass
             # If there is something more basic failing, the count trigger
@@ -249,6 +251,8 @@ if __name__ == '__main__':
     p.add_argument('-f', '--foreground', action='store_const', default=0,
                    const=1,
                    help='Do not fork to background')
+    p.add_argument('-e', '--emailexceptions', default='5',
+                   help='Number of repeated exceptions before sending emails')
 
     args = p.parse_args()
 
