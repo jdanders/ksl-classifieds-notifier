@@ -9,7 +9,7 @@ from urllib.parse import urlencode, urljoin
 
 from bs4 import BeautifulSoup
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 Listing = namedtuple('Listing', 'title city state age price link description')
@@ -18,6 +18,10 @@ Listing = namedtuple('Listing', 'title city state age price link description')
 class KSL(object):
     SEARCH_URL = 'https://ksl.com/classifieds/search?'
     LIST_URL = 'https://www.ksl.com/classifieds/listing/'
+    time_offset = datetime.now() - datetime.utcnow()
+    time_offset = timedelta(days=time_offset.days,
+                            seconds=round(time_offset.seconds/60)*60)
+
 
     # Extra query string entries
     URL_QS = {
@@ -86,8 +90,9 @@ class KSL(object):
             if 'featured' in ad_box['listingType']:
                 continue
 
-            created = datetime.strptime(ad_box['createTime'],
-                                        "%Y-%m-%dT%H:%M:%SZ")
+            created = (datetime.strptime(ad_box['createTime'],
+                                         "%Y-%m-%dT%H:%M:%SZ")
+                       + self.time_offset)
             lifespan = str(created)
             link = urljoin(self.LIST_URL, str(ad_box['id']))
             yield Listing(ad_box['title'], ad_box['city'], ad_box['state'],
