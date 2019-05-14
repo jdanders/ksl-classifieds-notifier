@@ -89,6 +89,9 @@ class KSL(object):
         for ad_box in listings:
             if 'featured' in ad_box['listingType']:
                 continue
+            if 'price' not in ad_box:
+                # Free items are missing the price
+                ad_box['price'] = 0
 
             created = (datetime.strptime(ad_box['createTime'],
                                          "%Y-%m-%dT%H:%M:%SZ")
