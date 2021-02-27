@@ -121,10 +121,13 @@ class KSL(object):
                     and ('state' not in args or not args['state'])):
                 args['state'] = 'UT'
 
+            expand_search = args.pop('expand_search')
+
             qs = {
                 'keyword': query,
                 'priceFrom': minp,
                 'priceTo': maxp,
+                'expandSearch': expand_search
             }
 
             # apply defaults
@@ -183,6 +186,8 @@ if __name__ == '__main__':
     p.add_argument('query', nargs='+', action='store', default=None,
                    help='List of terms to search on KSL classifieds. '
                    'Use quotes for multiword searches')
+    p.add_argument('-x', '--expand-search', action='store_const', default=0, const=1,
+                   help='Include listings more broadly related to your search terms.')
     p.add_argument('-c', '--category', default=None,
                    help='Category to apply to search results')
     p.add_argument('-u', '--subcategory', default=None, dest='subCategory',
