@@ -16,11 +16,13 @@ That will check KSL Classifieds every 10 minutes until killed and send `your_ema
 Help:
 ```
   ./ksl_notify.py --help
-usage: ksl_notify.py [-h] [--email EMAIL] [--smtpserver SMTPSERVER]
-                     [-t [TIME]] [-l LOGFILE] [--loglevel LOGLEVEL]
-                     [-c CATEGORY] [-u SUBCATEGORY] [-m MIN_PRICE]
+usage: ksl_notify.py [-h] [-x] [-c CATEGORY] [-u SUBCATEGORY] [-m MIN_PRICE]
                      [-M MAX_PRICE] [-z ZIP] [--city CITY] [--state STATE]
-                     [-d MILES] [-n PERPAGE] [-r] [-s] [-f]
+                     [-d MILES] [-n PERPAGE] [-r] [-s] [--email EMAIL]
+                     [--smtpserver SMTPSERVER] [--receiver RECEIVER]
+                     [-t [TIME]] [--head HEAD] [--char-limit CHAR_LIMIT]
+                     [--load LOAD] [--save SAVE] [-l LOGFILE]
+                     [--loglevel LOGLEVEL] [-f] [-e EMAILEXCEPTIONS]
                      query [query ...]
 
 ksl_notify - command line utility to notify of new KSL classifieds ads
@@ -31,16 +33,8 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --email EMAIL         email address from which to both send and receive
-  --smtpserver SMTPSERVER
-                        email SMTP server:port, should be unneeded for gmail,
-                        outlook, hotmail, yahoo, or comcast
-  -t [TIME], --time [TIME]
-                        Number of minutes to wait between searches
-  -l LOGFILE, --logfile LOGFILE
-                        File to log output from daemon process, defaults to
-                        stdout
-  --loglevel LOGLEVEL   Choose level: debug, info, warning
+  -x, --expand-search   Include listings more broadly related to your search
+                        terms.
   -c CATEGORY, --category CATEGORY
                         Category to apply to search results
   -u SUBCATEGORY, --subcategory SUBCATEGORY
@@ -62,7 +56,33 @@ optional arguments:
                         is newest to oldest
   -s, --sold            If included, query will return results for sold items
                         as well as active items
+  --email EMAIL         email address from which to send.If --receiver is not
+                        specified, this email will also be used as the
+                        receiver.
+  --smtpserver SMTPSERVER
+                        email SMTP server:port, should be unneeded for gmail,
+                        outlook, hotmail, msn, yahoo, or comcast
+  --receiver RECEIVER   email address to send the email to. Defaults to
+                        --email value.
+  -t [TIME], --time [TIME]
+                        Number of minutes to wait between searches
+  --head HEAD           Number of lines to include from the listing's
+                        description.
+  --char-limit CHAR_LIMIT
+                        Number of characters allowed in the message body.
+                        Listings that exceed the character count will be sent
+                        in additional messages.
+  --load LOAD           Load seen listings from a JSON file. Format is a
+                        dictionary of query search terms to listing links.
+  --save SAVE           Save seen listings to a JSON file. File extension must
+                        be .json.
+  -l LOGFILE, --logfile LOGFILE
+                        File to log output from daemon process, defaults to
+                        stdout
+  --loglevel LOGLEVEL   Choose level: debug, info, warning
   -f, --foreground      Do not fork to background
+  -e EMAILEXCEPTIONS, --emailexceptions EMAILEXCEPTIONS
+                        Number of repeated exceptions before sending emails
 ```
 
 ### Advanced Usage:
@@ -88,8 +108,6 @@ The script is designed to run as a background process. The most awkward part abo
 As a background process, it is designed to be resilient to exceptions. As such, there is a running count of exception incidents, starting at 0, incrementing by 10 for each exception, and decrementing by 1 for each successful loop. If there's a serious problem (internet down, KSL server change, etc) the script will stop after the count exceeds 100. If there are infrequent issues (socket timeout), it will plow through those events and notify the email of the event unless the loglevel disables it.
 
 ### Possible improvements:
-
-Figure out how to make the ksl_notify argparse parameters inherit from the ksl.py parameters so that the code is not duplicated.
 
 Add a callback of some kind to allow user to add custom filtering on results before deciding whether to email the result.
 

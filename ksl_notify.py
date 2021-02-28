@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import sys
-import argparse
 import logging
 import time
 import datetime
@@ -10,6 +9,7 @@ import smtplib
 import socket
 import json
 from ksl import KSL, Listing
+from ksl_notify_cli_parser import KslNotifyCliParser
 
 
 # Message strings
@@ -138,7 +138,7 @@ def create_message_bodies(search_term, listings, char_limit, head):
     for listing in listings:
         formatted_listing_by_listing[listing] = format_listing(listing, head)
 
-    header = HEADER_TEMPLATE.format(plural="es" if len(listings) > 0 else "", query=search_term)
+    header = HEADER_TEMPLATE.format(plural="es" if len(listings) > 1 else "", query=search_term)
     subject_count = len(SUBJECT_TEMPLATE.format(query=search_term,
                                                 n=len(listings),
                                                 total=len(listings),
@@ -310,73 +310,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    p = argparse.ArgumentParser(
-        description=('ksl_notify - command line utility to notify of '
-                     'new KSL classifieds ads')
-    )
-
-    p.add_argument('--email', default=None,
-                   help='email address from which to send. '
-                        'If --receiver is not specified, this email will also be used as the receiver.')
-    p.add_argument('--smtpserver', default='',
-                   help='email SMTP server:port, should be unneeded for '
-                   'gmail, outlook, hotmail, msn, yahoo, or comcast')
-    p.add_argument('--receiver', default=None,
-                   help='email address to send the email to. Defaults to --email value.')
-    p.add_argument('-t', '--time', nargs='?', default=10, const=int, type=int,
-                   help='Number of minutes to wait between searches')
-    p.add_argument('--load', default=None,
-                   help='Load seen listings from a .json file. Format is a dictionary of query search terms to listing links')
-    p.add_argument('--save', default=None,
-                   help='Save seen listings to a JSON file. File extentions must be .json.')
-    p.add_argument('-l', '--logfile', default=None,
-                   help='File to log output from daemon process, defaults '
-                   'to stdout')
-    p.add_argument('--loglevel', default="INFO",
-                   help='Choose level: debug, info, warning')
-    p.add_argument('query', nargs='+', action='store', default=None,
-                   help='List of terms to search on KSL classifieds. '
-                   'Use quotes for multiword searches')
-    p.add_argument('-x', '--expand-search', action='store_const', default=0, const=1,
-                   help='Include listings more broadly related to your search terms.')
-    p.add_argument('-c', '--category', default=None,
-                   help='Category to apply to search results')
-    p.add_argument('-u', '--subcategory', default=None, dest='subCategory',
-                   help='Category to apply to search results')
-    p.add_argument('-m', '--min-price', default='0',
-                   help='Minimum dollar amount to include in search results')
-    p.add_argument('-M', '--max-price', default='0',
-                   help='Maximum dollar amount to include in search results')
-    p.add_argument('-z', '--zip', default=None,
-                   help='ZIP code around which to center search results')
-    p.add_argument('--city', default=None,
-                   help='City around which to center search results')
-    p.add_argument('--state', default=None,
-                   help='State (abbr, like UT) around which to center search '
-                   'results')
-    p.add_argument('-d', '--miles', default=None,
-                   help='Maximum distance in miles from ZIP code center')
-    p.add_argument('-n', '--perPage', default=None,
-                   help='Number of results to include in search results.'
-                   '(Does not seem to work!)')
-    p.add_argument('--head', default=None, type=int,
-                   help="Number of lines to include from the listing's description.")
-    p.add_argument('--char-limit', default=None, type=int,
-                   help="Number of characters allowed in the message body. " 
-                        "Listings that exceed the character count will be sent in additional messages.")
-    p.add_argument('-r', '--reverse', action='store_const',
-                   default=0, const=1, dest='sort',
-                   help='If included, query will sort oldest to newest. '
-                   'Default is newest to oldest')
-    p.add_argument('-s', '--sold', action='store_const', default=0, const=1,
-                   help='If included, query will return results for sold '
-                   'items as well as active items')
-    p.add_argument('-f', '--foreground', action='store_const', default=0,
-                   const=1,
-                   help='Do not fork to background')
-    p.add_argument('-e', '--emailexceptions', default='5',
-                   help='Number of repeated exceptions before sending emails')
-
+    p = KslNotifyCliParser().parser
     args = p.parse_args()
 
     main(vars(args))
