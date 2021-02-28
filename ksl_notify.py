@@ -8,6 +8,7 @@ import datetime
 import getpass
 import smtplib
 import socket
+import json
 from ksl import KSL, Listing
 
 
@@ -62,33 +63,22 @@ def test_email_login(email, password, smtpserver):
     smtp.quit()
 
 
-def format_listings(query_result, seen, head):
-    new_seen = seen.copy()
-    listings_formatted = []
-    for listing in query_result:
-        if listing.link not in seen:
-            description = listing.description
+def format_listing(listing, head):
+    description = listing.description
 
-            # Take the first n lines of the description if head is specified
-            if head:
-                description = '\n'.join(listing.description.strip().split('\n')[:head])
+    # Take the first n lines of the description if head is specified
+    if head:
+        description = '\n'.join(listing.description.strip().split('\n')[:head])
 
-            listing_formatted = ('*' * 25 +
-                               '\n{listing.link}\n'
-                               '{listing.title}\n'
-                               '${listing.price} - {listing.age} - '
-                               '{listing.city}, {listing.state}\n'
-                               '*  {description}\n\n'.format(**locals()))
+    listing_formatted = ('*' * 25 +
+                       '\n{listing.link}\n'
+                       '{listing.title}\n'
+                       '${listing.price} - {listing.age} - '
+                       '{listing.city}, {listing.state}\n'
+                       '*  {description}\n\n'.format(**locals()))
 
-            # Kill non-ascii characters
-            listing_formatted = listing_formatted.encode('ascii', 'ignore').decode()
-
-            listings_formatted.append(listing_formatted)
-
-            # Track seen results
-            new_seen.append(listing.link)
-
-    return listings_formatted, new_seen
+    # Kill non-ascii characters
+    return listing_formatted.encode('ascii', 'ignore').decode()
 
 
 def check_ksl(args, queries, seen, receiver, sender, passwd, smtpserver):
@@ -98,88 +88,128 @@ def check_ksl(args, queries, seen, receiver, sender, passwd, smtpserver):
     head = args['head']
     char_limit = args["char_limit"]
 
+    logging.debug("Beginning search...")
     for query, html_data in ksl.search(queries, **args):
         if query not in seen:
             seen[query] = []
+            logging.debug("Initialized query {query} into seen dictionary.".format(query=query))
 
-        query_result = ksl.find_elements(html_data)
+        logging.debug("Filtering out seen listings...")
+        query_result = [listing for listing in ksl.find_elements(html_data) if listing.link not in seen[query]]
+        logging.debug("Acquired {count} unseen listings: {listings}".format(count=len(query_result),
+                                                                            listings=query_result))
 
-        listings, new_seen_list = format_listings(query_result, seen[query], head)
-
-        message_bodies = create_message_bodies(query, listings, char_limit)
+        logging.debug("Creating message bodies for listings...")
+        links_by_message_bodies = create_message_bodies(query, query_result, char_limit, head)
+        logging.debug("Message bodies created.")
 
         # Email new results
-        messages = []
-        current_time = get_current_time()
-        for i, message_body in enumerate(message_bodies):
-            message = MESSAGE_TEMPLATE.format(subject=SUBJECT_TEMPLATE.format(query=query,
-                                                                              n=i + 1,
-                                                                              total=len(message_bodies),
-                                                                              time=current_time),
-                                              receiver=receiver,
-                                              sender=sender.format(mail=sender),
-                                              body=message_body)
-            messages.append(message)
+        with EmailSession(sender, passwd, smtpserver) as emailSession:
+            current_time = get_current_time()
+            for i, (message_body, links) in enumerate(links_by_message_bodies.items()):
+                message = MESSAGE_TEMPLATE.format(subject=SUBJECT_TEMPLATE.format(query=query,
+                                                                                  n=i + 1,
+                                                                                  total=len(links_by_message_bodies),
+                                                                                  time=current_time),
+                                                  receiver=receiver,
+                                                  sender=sender.format(mail=sender),
+                                                  body=message_body)
 
-        send_emails(receiver, sender, passwd, smtpserver, messages)
+                logging.info("Sending email {n} of {total}".format(n=i + 1, total=len(links_by_message_bodies)))
+                emailSession.sendmail(sender.format(mail=sender), receiver, message)
+                # Save of results for next time
+                seen[query].extend(links)
+                logging.debug("Sent this message:\n{message}".format(message=message))
 
-        if len(message_bodies) == 0:
-            logging.info("No new search results found. No email sent.")
+            if len(links_by_message_bodies) == 0:
+                logging.info("No new search results found. No email sent.")
 
-        # Save of results for next time
-        seen[query] = new_seen_list
+        logging.debug("{count} emails sent to {receiver}."
+                      .format(count=len(links_by_message_bodies.keys()), receiver=receiver))
     return seen
-
-
-def send_emails(receiver, sender, password, smtpserver, messages):
-    smtp_addr, smtp_port = smtpserver.split(":")
-    smtp = smtplib.SMTP(smtp_addr, int(smtp_port))
-    smtp.ehlo()
-    smtp.starttls()
-    smtp.login(sender, password)
-
-    for i, message in enumerate(messages):
-        logging.info("Sending email {n} of {total}".format(n=i + 1, total=len(messages)))
-        smtp.sendmail(sender.format(mail=sender), receiver, message)
-        logging.debug("Sent this message:\n{message}".format(message=message))
-
-    smtp.quit()
 
 
 def get_current_time():
     return datetime.datetime.now().strftime("%H:%M")
 
 
-def create_message_bodies(search_term, listings, char_limit):
+def create_message_bodies(search_term, listings, char_limit, head):
+    formatted_listing_by_listing = {}
+    for listing in listings:
+        formatted_listing_by_listing[listing] = format_listing(listing, head)
+
     header = HEADER_TEMPLATE.format(plural="es" if len(listings) > 0 else "", query=search_term)
     subject_count = len(SUBJECT_TEMPLATE.format(query=search_term,
                                                 n=len(listings),
                                                 total=len(listings),
                                                 time=get_current_time()))
 
-    message_bodies = []
+    links_by_message_bodies = {}
+    links = []
     listings_report = ""
 
     # If there's a character limit, break the report into parts so that no part exceeds char_limit.
-    for listing in listings:
+    for listing, formatted_listing in formatted_listing_by_listing.items():
         if char_limit:
             # If listing pushes message body past character count, store message body without adding the listing.
             # Note: Subject is included in char count since it's included in the message body when sent through SMS.
-            if len(listings_report) + len(listing) + len(header) + subject_count > char_limit:
-                message_bodies.append(BODY_TEMPLATE.format(header=header, listings_report=listings_report))
+            if len(listings_report) + len(formatted_listing) + len(header) + subject_count > char_limit:
+                links_by_message_bodies[BODY_TEMPLATE.format(header=header, listings_report=listings_report)] = links
                 listings_report = ""
+                links = []
+        links.append(listing.link)
+        listings_report += formatted_listing
 
-        listings_report += listing
+    if len(formatted_listing_by_listing) > 0:
+        links_by_message_bodies[BODY_TEMPLATE.format(header=header, listings_report=listings_report)] = links
 
-    if len(listings) > 0:
-        message_bodies.append(BODY_TEMPLATE.format(header=header, listings_report=listings_report))
+    return links_by_message_bodies
 
-    return message_bodies
+
+def save_seen(file, seen):
+    logging.info("Saving file {file}".format(file=file))
+    with open(file, 'w') as f:
+        json.dump(seen, f, indent=2)
+
+
+def load_seen(file):
+    logging.info("Loading file {file}".format(file=file))
+    with open(file, 'r') as f:
+        return json.load(f)
+
+
+class EmailSession(object):
+    def __init__(self, sender, password, smtpserver):
+        self.sender = sender
+        self.password = password
+        self.smtpserver = smtpserver
+        self.smtp = None
+
+    def __enter__(self):
+        logging.debug("Opening email session...")
+        smtp_addr, smtp_port = self.smtpserver.split(":")
+        logging.debug("Getting smtp...")
+        self.smtp = smtplib.SMTP(smtp_addr, int(smtp_port))
+        logging.debug("Sending ehlo command...")
+        self.smtp.ehlo()
+        logging.debug("Starting tls...")
+        self.smtp.starttls()
+        logging.debug("Logging in to email...")
+        self.smtp.login(self.sender, self.password)
+        logging.debug("Email session started.")
+        return self.smtp
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if exc_value and exc_value and tb:
+            logging.warning("Exception occurred. Type: {type} | Value: {value} | Traceback: {tb}"
+                        .format(type=exc_type, value=exc_value, tb=tb))
+        self.smtp.quit()
+        logging.debug("Email session closed.")
 
 
 def main(args):
     # Set up logging
-    logfile = args.pop('logfile')
+    logfile = args['logfile']
     if logfile:
         logging.basicConfig(filename=logfile, filemode='w',
                             format=('%(asctime)s %(module)s %(levelname)s'
@@ -194,7 +224,7 @@ def main(args):
         logging.getLogger().setLevel(numeric_level)
 
     # Get needed controls
-    loop_delay = args.pop('time') * 60
+    loop_delay = args['time'] * 60
     sender = args.pop('email', None)
     smtpserver = args.pop('smtpserver', None)
     if not sender:
@@ -214,12 +244,12 @@ def main(args):
     if not foreground:
         pid = os.fork()
         if pid:
-            print ("Sending notifier to background with pid %d" % pid)
-            print ("  use 'kill %d' to kill the process" % pid)
+            print("Sending notifier to background with pid %d" % pid)
+            print("  use 'kill %d' to kill the process" % pid)
             sys.exit()
 
     # Dictionary to store results of queries
-    seen = {}
+    seen = load_seen(args["load"]) if args["load"] else {}
 
     # find our results
     queries = args.pop('query')
@@ -228,13 +258,15 @@ def main(args):
     today = None
     while True:
         try:
+            logging.debug("Checking KSL")
             seen = check_ksl(args, queries, seen, receiver, sender, passwd, smtpserver)
             # log seen list daily for debug
-            if (today != datetime.date.today()):
+            if today != datetime.date.today():
                 logging.debug("seen list: %s"%(seen))
                 today = datetime.date.today()
             if exception_count > 0:
-                exception_count -= 1
+                exception_count -= 10
+            logging.debug("Exception count is {count}".format(count=exception_count))
         # While looping in daemon mode, try to keep executing
         # This will catch bad server connections, etc.
         except KeyboardInterrupt:
@@ -249,26 +281,30 @@ def main(args):
             try:
                 exc_txt = str(e)
                 if exception_count > exception_thresh:
-                    logging.info("Sending exception message to {sender}".format(sender=sender))
-                    send_emails(sender,
-                                sender,
-                                passwd,
-                                smtpserver,
-                                [MESSAGE_TEMPLATE.format(subject="KSL Notifier Failure",
-                                                       receiver=sender,
-                                                       sender=sender,
-                                                       body="Exception in script detected.\n"
-                                                            "Exception count %d\n"
-                                                            "The script will die after the count reaches 10\n"
-                                                            "%s"
-                                                            % (exception_count / 10, exc_txt))])
-            except:
-                pass
+                    with EmailSession(sender, passwd, smtpserver) as email_session:
+                        logging.info("Sending exception message to {sender}".format(sender=sender))
+                        email_session.sendmail(sender,
+                                               sender,
+                                               MESSAGE_TEMPLATE.format(subject="KSL Notifier Failure",
+                                                                       receiver=sender,
+                                                                       sender=sender,
+                                                                       body="Exception in script detected.\n"
+                                                                            "Exception count %d\n"
+                                                                            "The script will die after the count reaches 10\n"
+                                                                            "%s"
+                                                                            % (exception_count / 10, exc_txt)))
+            except e:
+                logging.debug("There was an issue sending the exception message to {sender}. {e}".format(sender=sender, e=e))
             # If there is something more basic failing, the count trigger
             # a final failure of the loop.
             if exception_count > 100:
                 logging.error("Too many exceptions, terminating")
                 raise
+        finally:
+            if args["save"]:
+                save_seen(args["save"], seen)
+
+        logging.debug("Sleeping for {minutes} minutes".format(minutes=args['time']))
         time.sleep(loop_delay)
 
 
@@ -288,6 +324,10 @@ if __name__ == '__main__':
                    help='email address to send the email to. Defaults to --email value.')
     p.add_argument('-t', '--time', nargs='?', default=10, const=int, type=int,
                    help='Number of minutes to wait between searches')
+    p.add_argument('--load', default=None,
+                   help='Load seen listings from a .json file. Format is a dictionary of query search terms to listing links')
+    p.add_argument('--save', default=None,
+                   help='Save seen listings to a JSON file. File extentions must be .json.')
     p.add_argument('-l', '--logfile', default=None,
                    help='File to log output from daemon process, defaults '
                    'to stdout')
