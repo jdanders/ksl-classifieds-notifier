@@ -179,17 +179,18 @@ def load_seen(file):
 
 
 class EmailSession(object):
-    def __init__(self, sender, password, smtpserver):
+    def __init__(self, sender, password, smtpserver, timeout=120):
         self.sender = sender
         self.password = password
         self.smtpserver = smtpserver
+        self.timeout = timeout
         self.smtp = None
 
     def __enter__(self):
         logging.debug("Opening email session...")
         smtp_addr, smtp_port = self.smtpserver.split(":")
         logging.debug("Getting smtp...")
-        self.smtp = smtplib.SMTP(smtp_addr, int(smtp_port))
+        self.smtp = smtplib.SMTP(smtp_addr, int(smtp_port), timeout=self.timeout)
         logging.debug("Sending ehlo command...")
         self.smtp.ehlo()
         logging.debug("Starting tls...")
