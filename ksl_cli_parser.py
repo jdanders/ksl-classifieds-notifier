@@ -4,13 +4,13 @@ import argparse
 class KslCliParser(object):
     def __init__(self):
         self.parser = argparse.ArgumentParser(
-            description='ksl - command line utility to query KSL classifieds'
+            description='KSL - command line utility to query KSL classifieds'
         )
 
         self.parser.add_argument('query', nargs='+', action='store', default=None,
                                  help='List of terms to search on KSL classifieds. '
                                       'Use quotes for multiword searches')
-        self.parser.add_argument('-x', '--expand-search', action='store_const', default=0, const=1,
+        self.parser.add_argument('-x', '--expand-search', action='store_const', default=0, const=1, dest='expandSearch',
                                  help='Include listings more broadly related to your search terms.')
         self.parser.add_argument('-c', '--category', default=None,
                                  help='Category to apply to search results')

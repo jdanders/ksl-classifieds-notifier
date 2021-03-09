@@ -210,7 +210,7 @@ class EmailSession(object):
 
 def main(args):
     # Set up logging
-    logfile = args['logfile']
+    logfile = args.pop('logfile')
     if logfile:
         logging.basicConfig(filename=logfile, filemode='w',
                             format=('%(asctime)s %(module)s %(levelname)s'
@@ -225,7 +225,8 @@ def main(args):
         logging.getLogger().setLevel(numeric_level)
 
     # Get needed controls
-    loop_delay = args['time'] * 60
+    minutes = args.pop('time')
+    loop_delay = minutes * 60
     sender = args.pop('email', None)
     smtpserver = args.pop('smtpserver', None)
     if not sender:
@@ -250,7 +251,10 @@ def main(args):
             sys.exit()
 
     # Dictionary to store results of queries
-    seen = load_seen(args["load"]) if args["load"] else {}
+    load_file = args.pop("load")
+    seen = load_seen(load_file) if load_file else {}
+
+    save_file = args.pop("save")
 
     # find our results
     queries = args.pop('query')
@@ -302,15 +306,14 @@ def main(args):
                 logging.error("Too many exceptions, terminating")
                 raise
         finally:
-            if args["save"]:
-                save_seen(args["save"], seen)
+            if save_file:
+                save_seen(save_file, seen)
 
-        logging.debug("Sleeping for {minutes} minutes".format(minutes=args['time']))
+        logging.debug("Sleeping for {minutes} minutes".format(minutes=minutes))
         time.sleep(loop_delay)
 
 
 if __name__ == '__main__':
-    p = KslNotifyCliParser().parser
-    args = p.parse_args()
+    args = KslNotifyCliParser().parser.parse_args()
 
     main(vars(args))

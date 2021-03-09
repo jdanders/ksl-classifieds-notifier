@@ -20,6 +20,21 @@ class KSL(object):
     time_offset = datetime.now() - datetime.utcnow()
     time_offset = timedelta(days=time_offset.days,
                             seconds=round(time_offset.seconds/60)*60)
+    QUERY_PARAM_KEYS = {
+        'expandSearch',
+        'keyword',
+        'nocache',
+        'zip',
+        'miles',
+        'sort',
+        'sold',
+        'city',
+        'state',
+        'priceFrom',
+        'priceTo',
+        'subCategory',
+        'category'
+    }
 
 
     # Extra query string entries
@@ -126,13 +141,10 @@ class KSL(object):
                     and ('state' not in args or not args['state'])):
                 args['state'] = 'UT'
 
-            expand_search = args.pop('expand_search')
-
             qs = {
                 'keyword': query,
                 'priceFrom': minp,
-                'priceTo': maxp,
-                'expandSearch': expand_search
+                'priceTo': maxp
             }
 
             # apply defaults
@@ -141,7 +153,8 @@ class KSL(object):
             # fill in any additional parameters
             # that were passed, but not explicitly handled
             for k, value in args.items():
-                qs.setdefault(k, value)
+                if k in KSL.QUERY_PARAM_KEYS:
+                    qs.setdefault(k, value)
 
             # Remove None values
             qs = {k: v for k, v in qs.items() if v is not None}
