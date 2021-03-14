@@ -271,7 +271,6 @@ def main(args):
                 today = datetime.date.today()
             if exception_count > 0:
                 exception_count -= 10
-            logging.debug("Exception count is {count}".format(count=exception_count))
         # While looping in daemon mode, try to keep executing
         # This will catch bad server connections, etc.
         except KeyboardInterrupt:
@@ -308,6 +307,7 @@ def main(args):
         finally:
             if save_file:
                 save_seen(save_file, seen)
+            logging.debug("Exception count is {count}".format(count=exception_count))
 
         logging.debug("Sleeping for {minutes} minutes".format(minutes=minutes))
         time.sleep(loop_delay)
