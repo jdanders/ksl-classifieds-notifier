@@ -1,8 +1,9 @@
 import concurrent.futures
 
 from collections import namedtuple
-from urllib.request import urlopen, Request
+from urllib.request import Request, build_opener, HTTPCookieProcessor
 from urllib.parse import urlencode, urljoin
+from http.cookiejar import CookieJar
 import logging
 
 from bs4 import BeautifulSoup
@@ -59,7 +60,11 @@ class KSL(object):
                 'User-Agent': ('Mozilla/5.0')
             }
         )
-        return (query, urlopen(req, timeout=timeout).read(), )
+        cookies = CookieJar()
+        opener = build_opener(HTTPCookieProcessor(cookies))
+        response = opener.open(req, timeout=timeout)
+
+        return (query, response.read(),)
 
     def search(self, query, **etc):
         with self.thread_pool as ex:
