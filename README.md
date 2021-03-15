@@ -20,9 +20,10 @@ usage: ksl_notify.py [-h] [-x] [-c CATEGORY] [-u SUBCATEGORY] [-m MIN_PRICE]
                      [-M MAX_PRICE] [-z ZIP] [--city CITY] [--state STATE]
                      [-d MILES] [-n PERPAGE] [-r] [-s] [--email EMAIL]
                      [--smtpserver SMTPSERVER] [--receiver RECEIVER]
-                     [-t [TIME]] [--head HEAD] [--char-limit CHAR_LIMIT]
-                     [--load LOAD] [--save SAVE] [-l LOGFILE]
-                     [--loglevel LOGLEVEL] [-f] [-e EMAILEXCEPTIONS]
+                     [--exception-receiver EXCEPTION_RECEIVER] [-t [TIME]]
+                     [--head HEAD] [--char-limit CHAR_LIMIT] [--load LOAD]
+                     [--save SAVE] [-l LOGFILE] [--loglevel LOGLEVEL] [-f]
+                     [-e EMAILEXCEPTIONS]
                      query [query ...]
 
 ksl_notify - command line utility to notify of new KSL classifieds ads
@@ -63,6 +64,9 @@ optional arguments:
                         email SMTP server:port, should be unneeded for gmail,
                         outlook, hotmail, msn, yahoo, or comcast
   --receiver RECEIVER   email address to send the email to. Defaults to
+                        --email value.
+  --exception-receiver EXCEPTION_RECEIVER
+                        email address to send exception emails to. Defaults to
                         --email value.
   -t [TIME], --time [TIME]
                         Number of minutes to wait between searches

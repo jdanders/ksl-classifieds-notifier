@@ -241,6 +241,10 @@ def main(args):
     if not receiver:
         receiver = sender
 
+    exception_receiver = args.pop('exception_receiver')
+    if not exception_receiver:
+        exception_receiver = sender
+
     # Fork to background
     foreground = args.pop('foreground')
     if not foreground:
@@ -286,11 +290,11 @@ def main(args):
                 exc_txt = str(e)
                 if exception_count > exception_thresh:
                     with EmailSession(sender, passwd, smtpserver) as email_session:
-                        logging.info("Sending exception message to {sender}".format(sender=sender))
+                        logging.info("Sending exception message to {receiver}".format(receiver=exception_receiver))
                         email_session.sendmail(sender,
-                                               sender,
+                                               exception_receiver,
                                                MESSAGE_TEMPLATE.format(subject="KSL Notifier Failure",
-                                                                       receiver=sender,
+                                                                       receiver=exception_receiver,
                                                                        sender=sender,
                                                                        body="Exception in script detected.\n"
                                                                             "Exception count %d\n"

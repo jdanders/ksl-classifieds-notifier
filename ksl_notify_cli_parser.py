@@ -14,6 +14,8 @@ class KslNotifyCliParser(KslCliParser):
                                       'gmail, outlook, hotmail, msn, yahoo, or comcast')
         self.parser.add_argument('--receiver', default=None,
                                  help='email address to send the email to. Defaults to --email value.')
+        self.parser.add_argument('--exception-receiver', default=None,
+                                 help='email address to send exception emails to. Defaults to --email value.')
         self.parser.add_argument('-t', '--time', nargs='?', default=10, const=int, type=int,
                                  help='Number of minutes to wait between searches')
         self.parser.add_argument('--head', default=None, type=int,
