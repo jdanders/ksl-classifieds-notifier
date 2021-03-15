@@ -307,7 +307,7 @@ def main(args):
         finally:
             if save_file:
                 save_seen(save_file, seen)
-            logging.debug("Exception count is {count}".format(count=exception_count))
+            logging.debug("Exception count is {count}".format(count=exception_count/10))
 
         logging.debug("Sleeping for {minutes} minutes".format(minutes=minutes))
         time.sleep(loop_delay)
