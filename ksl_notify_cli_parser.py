@@ -36,3 +36,5 @@ class KslNotifyCliParser(KslCliParser):
                                  help='Do not fork to background')
         self.parser.add_argument('-e', '--emailexceptions', default='5',
                                  help='Number of repeated exceptions before sending emails')
+        self.parser.add_argument('--exclude-links', default=False, action='store_true',
+                                 help='Exclude links from notification.')

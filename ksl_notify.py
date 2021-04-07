@@ -63,15 +63,17 @@ def test_email_login(email, password, smtpserver):
     smtp.quit()
 
 
-def format_listing(listing, head):
+def format_listing(listing, head, exclude_links=False):
     description = listing.description
 
     # Take the first n lines of the description if head is specified
     if head:
         description = '\n'.join(listing.description.strip().split('\n')[:head])
 
-    listing_formatted = ('*' * 25 +
-                       '\n{listing.link}\n'
+    link_formatted = '{link}\n'.format(link=listing.link) if not exclude_links else ''
+
+    listing_formatted = ('*' * 25 + '\n'
+                       '{link_formatted}'
                        '{listing.title}\n'
                        '${listing.price} - {listing.age} - '
                        '{listing.city}, {listing.state}\n'
@@ -100,7 +102,7 @@ def check_ksl(args, queries, seen, receiver, sender, passwd, smtpserver):
                                                                             listings=query_result))
 
         logging.debug("Creating message bodies for listings...")
-        links_by_message_bodies = create_message_bodies(query, query_result, char_limit, head)
+        links_by_message_bodies = create_message_bodies(query, query_result, char_limit, head, args['exclude_links'])
         logging.debug("Message bodies created.")
 
         # Email new results
@@ -133,10 +135,10 @@ def get_current_time():
     return datetime.datetime.now().strftime("%H:%M")
 
 
-def create_message_bodies(search_term, listings, char_limit, head):
+def create_message_bodies(search_term, listings, char_limit, head, exclude_links=False):
     formatted_listing_by_listing = {}
     for listing in listings:
-        formatted_listing_by_listing[listing] = format_listing(listing, head)
+        formatted_listing_by_listing[listing] = format_listing(listing, head, exclude_links)
 
     header = HEADER_TEMPLATE.format(plural="es" if len(listings) > 1 else "", query=search_term)
     subject_count = len(SUBJECT_TEMPLATE.format(query=search_term,
