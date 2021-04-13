@@ -92,8 +92,7 @@ class KSL(object):
             if 'price' not in ad_box:
                 # Free items are missing the price
                 ad_box['price'] = 0
-
-            created = (datetime.strptime(ad_box['createTime'],
+            created = (datetime.strptime(ad_box['displayTime'],
                                          "%Y-%m-%dT%H:%M:%SZ")
                        + self.time_offset)
             lifespan = str(created)
