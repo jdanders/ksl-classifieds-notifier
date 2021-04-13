@@ -19,9 +19,10 @@ Help:
 usage: ksl_notify.py [-h] [-x] [-c CATEGORY] [-u SUBCATEGORY] [-m MIN_PRICE]
                      [-M MAX_PRICE] [-z ZIP] [--city CITY] [--state STATE]
                      [-d MILES] [-n PERPAGE] [-r] [-s] [--email EMAIL]
-                     [--smtpserver SMTPSERVER] [--receiver RECEIVER]
-                     [--exception-receiver EXCEPTION_RECEIVER] [-t [TIME]]
-                     [--head HEAD] [--char-limit CHAR_LIMIT] [--load LOAD]
+                     [--receiver RECEIVER]
+                     [--exception-receiver EXCEPTION_RECEIVER]
+                     [--smtpserver SMTPSERVER] [-t [TIME]] [--head HEAD]
+                     [--char-limit CHAR_LIMIT] [--exclude-links] [--load LOAD]
                      [--save SAVE] [-l LOGFILE] [--loglevel LOGLEVEL] [-f]
                      [-e EMAILEXCEPTIONS]
                      query [query ...]
@@ -57,25 +58,27 @@ optional arguments:
                         is newest to oldest
   -s, --sold            If included, query will return results for sold items
                         as well as active items
-  --email EMAIL         email address from which to send.If --receiver is not
+  --email EMAIL         email address to send emails from.If --receiver is not
                         specified, this email will also be used as the
                         receiver.
-  --smtpserver SMTPSERVER
-                        email SMTP server:port, should be unneeded for gmail,
-                        outlook, hotmail, msn, yahoo, or comcast
   --receiver RECEIVER   email address to send the email to. Defaults to
                         --email value.
   --exception-receiver EXCEPTION_RECEIVER
                         email address to send exception emails to. Defaults to
                         --email value.
+  --smtpserver SMTPSERVER
+                        email SMTP server:port, should be unneeded for gmail,
+                        outlook, hotmail, msn, yahoo, or comcast
   -t [TIME], --time [TIME]
                         Number of minutes to wait between searches
   --head HEAD           Number of lines to include from the listing's
-                        description.
+                        description. If not specified, the entire description
+                        will be included.
   --char-limit CHAR_LIMIT
                         Number of characters allowed in the message body.
                         Listings that exceed the character count will be sent
                         in additional messages.
+  --exclude-links       Exclude links from message.
   --load LOAD           Load seen listings from a JSON file. Format is a
                         dictionary of query search terms to listing links.
   --save SAVE           Save seen listings to a JSON file. File extension must
@@ -94,10 +97,10 @@ optional arguments:
 Most filters available on the KSL webpage are made available through the script. Here's an example:
 
 ```
-./ksl_notify.py iphone galaxy --email example@example.com --smtpserver "smtp.example.com:587" -l /tmp/ksl_iphone_log.log --foreground --category Electronics --subcategory "Cell Phones Unlocked" --min-price 100 --max-price 250 --zip 84111 --miles 35 --time 60
+./ksl_notify.py iphone galaxy --sender sender@example.com --receiver receiver@example.com --smtpserver "smtp.example.com:587" -l /tmp/ksl_iphone_log.log --foreground --category Electronics --subcategory "Cell Phones Unlocked" --min-price 100 --max-price 250 --zip 84111 --miles 35 --time 60
 ```
 
-This will email `example@example.com` all listings matching "iphone" or "galaxy" searches in "Unlocked Cell Phones" underneath "Electronics" category that cost between $100-$250 within 35 miles of zip code 84111. It will check once per hour.
+This will send listing emails from `sender@example.com` to `receiver@example.com` that match "iphone" or "galaxy" searches in "Unlocked Cell Phones" underneath "Electronics" category that cost between $100-$250 within 35 miles of zip code 84111. It will check once per hour.
 
 ### Design:
 
