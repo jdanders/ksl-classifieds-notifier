@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 import json
 from datetime import datetime, timedelta
 
-from ksl_cli_parser import KslCliParser
+from cli.ksl_cli import KslCli
 
 Listing = namedtuple('Listing', 'title city state age price link description')
 
@@ -46,7 +46,8 @@ class KSL(object):
     def __init__(self):
         self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=4)
 
-    def __do_request(self, args):
+    @staticmethod
+    def __do_request(args):
         logging.debug("Performing request for args {args}".format(args=args))
         if len(args) == 2:
             query, url = args
@@ -64,7 +65,7 @@ class KSL(object):
         opener = build_opener(HTTPCookieProcessor(cookies))
         response = opener.open(req, timeout=timeout)
 
-        return (query, response.read(),)
+        return query, response.read()
 
     def search(self, query, **etc):
         with self.thread_pool as ex:
@@ -171,7 +172,7 @@ class KSL(object):
             logging.debug("Generated the search URL: {url}".format(url=queryurl))
             yield (query, queryurl, )
 
-    def listing(id):
+    def listing(self, id):
         pass
 
 
@@ -205,7 +206,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args = KslCliParser().parser.parse_args()
+    args = KslCli().parser.parse_args()
 
     # do it
     main(vars(args))

@@ -1,7 +1,7 @@
 import argparse
 
 
-class KslCliParser(object):
+class KslCli(object):
     def __init__(self):
         self.parser = argparse.ArgumentParser(
             description='KSL - command line utility to query KSL classifieds'

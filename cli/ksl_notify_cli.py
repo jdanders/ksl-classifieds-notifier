@@ -1,7 +1,7 @@
-from ksl_cli_parser import KslCliParser
+from cli.ksl_cli import KslCli
 
 
-class KslNotifyCliParser(KslCliParser):
+class KslNotifyCli(KslCli):
     def __init__(self):
         super().__init__()
         self.parser.description = 'ksl_notify - command line utility to notify of new KSL classifieds ads'
