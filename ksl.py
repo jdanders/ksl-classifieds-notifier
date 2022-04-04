@@ -79,6 +79,7 @@ class KSL(object):
         soup = BeautifulSoup(html, 'html.parser')
 
         # Webpage uses a javascript data structure to hold ad info
+        listings_elements = []
         for script in soup.find_all('script'):
             if "listings: " in str(script):
                 # reduce script to just json structure
@@ -100,7 +101,7 @@ class KSL(object):
                 list_json = "\n".join(list_json.split("\n")[:2])
                 list_json = list_json.rstrip(',') + "}"
                 # Turn the json into a dict and grab the list of listings
-                listings = json.loads(list_json)['listings']
+                listings_elements = json.loads(list_json)['listings']
                 logging.debug("Converted JSON listings into dictionary.")
                 break
 
@@ -111,7 +112,8 @@ class KSL(object):
         #  'photo', 'email', 'category', 'displayTime', 'price', 'zip',
         #  'homePhone', 'listingType', 'expireTime', 'title', 'id', 'name'
         logging.debug("Converting listing dictionary into Listing objects.")
-        for ad_box in listings:
+        listings = []
+        for ad_box in listings_elements:
             if 'featured' in ad_box['listingType']:
                 continue
             if 'price' not in ad_box:
@@ -122,9 +124,10 @@ class KSL(object):
                        + self.time_offset)
             lifespan = str(created)
             link = urljoin(self.LIST_URL, str(ad_box['id']))
-            yield Listing(ad_box['title'], ad_box['city'], ad_box['state'],
+            listings.append(Listing(ad_box['title'], ad_box['city'], ad_box['state'],
                           lifespan, ad_box['price'], link,
-                          ad_box['description'])
+                          ad_box['description']))
+        return listings
 
     def build_qs(self, queries, **etc):
         logging.debug("Building query...")

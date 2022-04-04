@@ -154,6 +154,11 @@ def main(args):
     # Get needed controls
     minutes = args.pop('time')
     loop_delay = minutes * 60
+
+    # Dictionary to store results of queries
+    load_file = args.pop("load")
+    seen = io.load_dict(load_file) if load_file else {}
+
     sender = args.pop('email', None)
     smtpserver = args.pop('smtpserver', None)
     if not sender:
@@ -180,10 +185,6 @@ def main(args):
             print("Sending notifier to background with pid %d" % pid)
             print("  use 'kill %d' to kill the process" % pid)
             sys.exit()
-
-    # Dictionary to store results of queries
-    load_file = args.pop("load")
-    seen = io.load_dict(load_file) if load_file else {}
 
     save_file = args.pop("save")
 

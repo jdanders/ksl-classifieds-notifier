@@ -15,28 +15,20 @@ That will check KSL Classifieds every 10 minutes until killed and send `your_ema
 
 Help:
 ```
-  ./ksl_notify.py --help
-usage: ksl_notify.py [-h] [-x] [-c CATEGORY] [-u SUBCATEGORY] [-m MIN_PRICE]
-                     [-M MAX_PRICE] [-z ZIP] [--city CITY] [--state STATE]
-                     [-d MILES] [-n PERPAGE] [-r] [-s] [--email EMAIL]
-                     [--receiver RECEIVER]
-                     [--exception-receiver EXCEPTION_RECEIVER]
-                     [--smtpserver SMTPSERVER] [-t [TIME]] [--head HEAD]
-                     [--char-limit CHAR_LIMIT] [--exclude-links] [--load LOAD]
-                     [--save SAVE] [-l LOGFILE] [--loglevel LOGLEVEL] [-f]
-                     [-e EMAILEXCEPTIONS]
+./ksl_notify.py --help
+usage: ksl_notify.py [-h] [-x] [-c CATEGORY] [-u SUBCATEGORY] [-m MIN_PRICE] [-M MAX_PRICE] [-z ZIP] [--city CITY] [--state STATE] [-d MILES] [-n PERPAGE] [-r] [-s] [--email EMAIL] [--to-email TO_EMAIL]
+                     [--exception-email EXCEPTION_EMAIL] [--smtpserver SMTPSERVER] [-t [TIME]] [-H HEAD] [-C CHAR_LIMIT] [-X] [-L LOAD] [-S SAVE] [-l LOGFILE] [--loglevel LOGLEVEL] [-f]
+                     [-e EMAIL_EXCEPTIONS]
                      query [query ...]
 
 ksl_notify - command line utility to notify of new KSL classifieds ads
 
 positional arguments:
-  query                 List of terms to search on KSL classifieds. Use quotes
-                        for multiword searches
+  query                 List of terms to search on KSL classifieds. Use quotes for multiword searches
 
 optional arguments:
   -h, --help            show this help message and exit
-  -x, --expand-search   Include listings more broadly related to your search
-                        terms.
+  -x, --expand-search   Include listings more broadly related to your search terms.
   -c CATEGORY, --category CATEGORY
                         Category to apply to search results
   -u SUBCATEGORY, --subcategory SUBCATEGORY
@@ -47,48 +39,32 @@ optional arguments:
                         Maximum dollar amount to include in search results
   -z ZIP, --zip ZIP     ZIP code around which to center search results
   --city CITY           City around which to center search results
-  --state STATE         State (abbr, like UT) around which to center search
-                        results
+  --state STATE         State (abbr, like UT) around which to center search results
   -d MILES, --miles MILES
                         Maximum distance in miles from ZIP code center
   -n PERPAGE, --perPage PERPAGE
-                        Number of results to include in search results.(Does
-                        not seem to work!)
-  -r, --reverse         If included, query will sort oldest to newest. Default
-                        is newest to oldest
-  -s, --sold            If included, query will return results for sold items
-                        as well as active items
-  --email EMAIL         email address to send emails from.If --receiver is not
-                        specified, this email will also be used as the
-                        receiver.
-  --receiver RECEIVER   email address to send the email to. Defaults to
-                        --email value.
-  --exception-receiver EXCEPTION_RECEIVER
-                        email address to send exception emails to. Defaults to
-                        --email value.
+                        Number of results to include in search results.(Does not seem to work!)
+  -r, --reverse         If included, query will sort oldest to newest. Default is newest to oldest
+  -s, --sold            If included, query will return results for sold items as well as active items
+  --email EMAIL         email address to send emails from. If --to-email is not specified, this email will also be used as the receiver of the email.
+  --to-email TO_EMAIL   email address to send the email to. Defaults to --email value.
+  --exception-email EXCEPTION_EMAIL
+                        email address to send exception emails to. Defaults to --email value.
   --smtpserver SMTPSERVER
-                        email SMTP server:port, should be unneeded for gmail,
-                        outlook, hotmail, msn, yahoo, or comcast
+                        email SMTP server:port, should be unneeded for gmail, outlook, hotmail, msn, yahoo, or comcast
   -t [TIME], --time [TIME]
                         Number of minutes to wait between searches
-  --head HEAD           Number of lines to include from the listing's
-                        description. If not specified, the entire description
-                        will be included.
-  --char-limit CHAR_LIMIT
-                        Number of characters allowed in the message body.
-                        Listings that exceed the character count will be sent
-                        in additional messages.
-  --exclude-links       Exclude links from message.
-  --load LOAD           Load seen listings from a JSON file. Format is a
-                        dictionary of query search terms to listing links.
-  --save SAVE           Save seen listings to a JSON file. File extension must
-                        be .json.
+  -H HEAD, --head HEAD  Number of lines to include from the listing's description. If not specified, the entire description will be included.
+  -C CHAR_LIMIT, --char-limit CHAR_LIMIT
+                        Number of characters allowed in the message body. Listings that exceed the character count will be sent in additional messages.
+  -X, --exclude-links   Exclude links from message.
+  -L LOAD, --load LOAD  Load seen listings from a JSON file. Format is a dictionary of query search terms to listing links.
+  -S SAVE, --save SAVE  Save seen listings to a JSON file.
   -l LOGFILE, --logfile LOGFILE
-                        File to log output from daemon process, defaults to
-                        stdout
+                        File to log output from daemon process, defaults to stdout
   --loglevel LOGLEVEL   Choose level: debug, info, warning
   -f, --foreground      Do not fork to background
-  -e EMAILEXCEPTIONS, --emailexceptions EMAILEXCEPTIONS
+  -e EMAIL_EXCEPTIONS, --email-exceptions EMAIL_EXCEPTIONS
                         Number of repeated exceptions before sending emails
 ```
 
@@ -97,7 +73,7 @@ optional arguments:
 Most filters available on the KSL webpage are made available through the script. Here's an example:
 
 ```
-./ksl_notify.py iphone galaxy --sender sender@example.com --receiver receiver@example.com --smtpserver "smtp.example.com:587" -l /tmp/ksl_iphone_log.log --foreground --category Electronics --subcategory "Cell Phones Unlocked" --min-price 100 --max-price 250 --zip 84111 --miles 35 --time 60
+./ksl_notify.py iphone galaxy --email sender@example.com --to-email receiver@example.com --smtpserver "smtp.example.com:587" -l /tmp/ksl_iphone_log.log --foreground --category Electronics --subcategory "Cell Phones Unlocked" --min-price 100 --max-price 250 --zip 84111 --miles 35 --time 60
 ```
 
 This will send listing emails from `sender@example.com` to `receiver@example.com` that match "iphone" or "galaxy" searches in "Unlocked Cell Phones" underneath "Electronics" category that cost between $100-$250 within 35 miles of zip code 84111. It will check once per hour.
