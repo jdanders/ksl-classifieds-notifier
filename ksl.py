@@ -16,8 +16,8 @@ Listing = namedtuple('Listing', 'title city state age price link description')
 
 
 class KSL(object):
-    SEARCH_URL = 'https://ksl.com/classifieds/search?'
-    LIST_URL = 'https://www.ksl.com/classifieds/listing/'
+    SEARCH_URL = 'https://classifieds.ksl.com/search/'
+    LIST_URL = 'https://classifieds.ksl.com/listing/'
     time_offset = datetime.now() - datetime.utcnow()
     time_offset = timedelta(days=time_offset.days,
                             seconds=round(time_offset.seconds/60)*60)
@@ -61,6 +61,7 @@ class KSL(object):
                 'User-Agent': ('Mozilla/5.0')
             }
         )
+        # print(url)
         cookies = CookieJar()
         opener = build_opener(HTTPCookieProcessor(cookies))
         response = opener.open(req, timeout=timeout)
@@ -81,36 +82,41 @@ class KSL(object):
         # Webpage uses a javascript data structure to hold ad info
         listings_elements = []
         for script in soup.find_all('script'):
-            if "listings: " in str(script):
+            if "window.renderSearchSection" in str(script):
                 # reduce script to just json structure
                 # Looks something like this right now:
                 #  window.renderSearchSection({ listings: [{"id" . . .
                 #  ...
                 #  })
                 # So we just need to grab stuff between outer parens
-                list_json = (script.contents[0].split('(', 1)[-1]
+                list_json = (script.contents[0].split('renderSearchSection(', 1)[-1]
                                                .rsplit(')', 1)[0])
                 # Put double quotes around property name
-                list_json = list_json.replace('listings: ', '"listings": ')
+                # list_json = list_json.replace('listings: ', '"listings": ')
+
                 # Remove unneeded and poorly formatted properties
-                '''
-                    displayType: 'grid',
-                    userData: {"contactBehindLogin":true}
-                '''
-                # so just keep the first two lines, then fix struct ending
-                list_json = "\n".join(list_json.split("\n")[:2])
-                list_json = list_json.rstrip(',') + "}"
+                # '''
+                    # displayType: 'grid',
+                    # userData: {"contactBehindLogin":true}
+                # '''
+
+                # so just keep the first two lines.
+                # place into a [] delimited by /n, then only keep first to items, then make back into a string and replace the /n's.
+                # list_json = "\n".join(list_json.split("\n")[:2])
+
+                # Fx struct ending.
+                # remove ending "," and add a "}"
+                # list_json = list_json.rstrip(',') + "}"
+
                 # Turn the json into a dict and grab the list of listings
                 listings_elements = json.loads(list_json)['listings']
                 logging.debug("Converted JSON listings into dictionary.")
                 break
 
         # keys in each listing:
-        #  'createTime', 'cellPhone', 'lat', 'modifyTime', 'sellerType',
-        #  'marketType', 'favorited', 'state', 'city', 'source', 'lon',
-        #  'description', 'pageviews', 'memberId', 'city_lower', 'subCategory',
-        #  'photo', 'email', 'category', 'displayTime', 'price', 'zip',
-        #  'homePhone', 'listingType', 'expireTime', 'title', 'id', 'name'
+        #  'id', 'memberId', 'displayTime', 'category', 'city', 'description', 'email', 'homePhone', 'marketType', 'name', 'price', 'sellerType', 'state', 'subCategory', 'title', 'zip', 'photo', 'newUsed', 'pageviews', 'favorited', 'reducedPriceData', 'listingType', 'source', 
+        #  No longer available? 'expireTime', 'createTime', 'cellPhone', 'lat', 'modifyTime', 'city_lower', 'lon',
+
         logging.debug("Converting listing dictionary into Listing objects.")
         listings = []
         for ad_box in listings_elements:
@@ -169,8 +175,13 @@ class KSL(object):
 
             logging.debug("Using the following query params: {query}".format(query=qs))
 
-            # encode
-            qs = urlencode(qs)
+            # encode URL
+            qsString = str()
+            for key in qs:
+                qsString += key + "/" + str(qs[key]) + "/"
+
+            qs = qsString
+            # qs = urlencode(qs)
             queryurl = self.SEARCH_URL + qs
             logging.debug("Generated the search URL: {url}".format(url=queryurl))
             yield (query, queryurl, )

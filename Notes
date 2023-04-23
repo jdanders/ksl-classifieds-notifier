@@ -1,0 +1,79 @@
+journalctl -fu [service]
+
+systemctl start [service]
+
+App Password Yahoo
+vifvtnyltovtilgo
+
+
+URL Sent
+https://classifieds.ksl.com/search/keyword/smartboard/nocache/1/expandSearch/0/sort/0/sold/0/
+https://classifieds.ksl.com/search/keyword/smartboard/zip/84604/miles/25
+URL Needed
+
+Cli Command
+./ksl_notify.py smartboard --email tripp4414@yahoo.com -l /home/avatar/Desktop/KSL/ksltest.log --loglevel debug --foreground 
+
+
+<class 'dict'>
+{'keyword': 'smartboard', 'nocache': 1, 'expandSearch': 0, 'sort': 0, 'sold': 0}
+
+
+
+FUNCTION ORDER:
+
+***ksl.py
+def search(self, query, **etc):
+   -Beginning search using thread pool for query ['smartboard'].
+    
+def build_qs(self, queries, **etc):
+   -Building query...
+   -Using the following query params: {'keyword': 'smartboard', 'nocache': 1, 'expandSearch': 0, 'sort': 0, 'sold': 0}
+   -Generated the search URL: https://classifieds.ksl.com/search/keyword/smartboard/nocache/1/expandSearch/0/sort/0/sold/0/
+    
+def __do_request(args):
+   -Performing request for args
+
+***ksl_notify.py
+def check_ksl(args, queries, seen, receiver, sender, passwd, smtpserver):
+   -Initialized query smartboard into seen dictionary.
+   -Filtering out seen listings...
+
+***ksl.py
+def find_elements(self, html, raw_html=False):
+   -Parsing HTML...
+   -Converting listing dictionary into Listing objects.
+   
+***ksl_notify.py
+def check_ksl(args, queries, seen, receiver, sender, passwd, smtpserver):
+   -Acquired 0 unseen listings: []
+   -Creating message bodies for listings...
+   
+***email.py
+def __enter__(self):
+   -Opening email session...
+   -Getting smtp...
+   -Sending ehlo command...
+   -Starting tls...
+   -Logging in to email...
+   -Email session started.
+   
+***ksl_notify.py
+def check_ksl(args, queries, seen, receiver, sender, passwd, smtpserver):
+   -No new search results found. No email sent.
+   
+***email.py
+def __exit__(self, exc_type, exc_value, tb):
+   -Email session closed.
+   
+***ksl_notify.py
+def check_ksl(args, queries, seen, receiver, sender, passwd, smtpserver):
+   -0 emails sent to tripp4414@yahoo.com.
+   
+***ksl_notify.py
+def main(args):
+   -seen list: {'smartboard': []}
+   -Exception count is 0.0
+   -Sleeping for 10 minutes
+
+

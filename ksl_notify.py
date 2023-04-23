@@ -37,6 +37,19 @@ def check_ksl(args, queries, seen, receiver, sender, passwd, smtpserver):
             seen[query] = []
             logging.debug("Initialized query {query} into seen dictionary.".format(query=query))
 
+        # ********************* LOGGING HTML DATA *********************
+        # print("*****************************************", type(html_data))
+
+        # file1 = open("query-data.html", "w")
+        # file1.write(query)
+        # file1.close()
+
+
+        # file1 = open("html-data.html", "wb")
+        # file1.write(html_data)
+        # file1.close()
+
+
         logging.debug("Filtering out seen listings...")
         query_result = [listing for listing in ksl.find_elements(html_data) if listing.link not in seen[query]]
         logging.debug("Acquired {count} unseen listings: {listings}".format(count=len(query_result),
@@ -173,7 +186,7 @@ def main(args):
     if not receiver:
         receiver = sender
 
-    exception_receiver = args.pop('exception_receiver')
+    exception_receiver = "your email"
     if not exception_receiver:
         exception_receiver = sender
 
@@ -190,7 +203,7 @@ def main(args):
 
     # find our results
     queries = args.pop('query')
-    exception_thresh = int(args.pop('emailexceptions')) * 10
+    exception_thresh = 5 * 10
     exception_count = 0
     today = None
 
